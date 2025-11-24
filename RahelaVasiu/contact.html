@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact | Rahela Vasiu</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Optional: extra file, wenn du trennen willst
+    <link rel="stylesheet" href="contact.css" /> -->
+</head>
+<body class="contact-page">
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+<script>
+    const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+    fetch(`${pathPrefix}navbar.html`)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("navbar-placeholder").innerHTML = html;
+
+            // active link markieren
+            const current = location.pathname.split("/").pop() || "index.html";
+            document
+                .querySelectorAll(".top-nav a")
+                .forEach(link => {
+                    if (link.getAttribute("href") === current) {
+                        link.classList.add("active");
+                    }
+                });
+        });
+</script>
+
+<main class="contact-wrapper">
+    <section class="contact-hero">
+        <h1>Let’s build something meaningful.</h1>
+        <p>
+            Whether it’s UX, product thinking or bringing ideas to life –
+            I’m happy to hear from you.
+        </p>
+    </section>
+
+    <section class="contact-grid">
+        <!-- Left: form -->
+        <div class="contact-card">
+            <h2>Say hello</h2>
+            <form id="contact-form" class="contact-form">
+                <div class="field">
+                    <label for="name">Name</label>
+                    <input id="name" name="name" type="text" required />
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" required />
+                </div>
+
+                <div class="field">
+                    <label for="topic">What’s this about?</label>
+                    <select id="topic" name="topic">
+                        <option value="project">Project / Collaboration</option>
+                        <option value="job">Job opportunity</option>
+                        <option value="question">Question</option>
+                        <option value="other">Something else</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="5" required></textarea>
+                </div>
+
+                <button type="submit" class="btn big">Send message</button>
+            </form>
+        </div>
+
+        <!-- Right: info / links -->
+        <div class="contact-card contact-info">
+            <h2>Direct contact</h2>
+            <p>
+                Prefer to write directly? You can reach me here:
+            </p>
+
+            <ul class="contact-list">
+                <li>
+                    <span class="label">Email</span>
+                    <a href="mailto:vasiurahela@gmail.com">vasiurahela@gmail.com</a>
+                </li>
+                <li>
+                    <span class="label">Based in</span>
+                    <span>Austria (open to remote)</span>
+                </li>
+            </ul>
+
+            <h3>Links</h3>
+            <div class="contact-links">
+                <!-- Passe die hrefs an -->
+                <a href="https://www.linkedin.com" target="_blank" rel="noreferrer" class="contact-pill">
+                    LinkedIn
+                </a>
+                <a href="https://www.behance.net" target="_blank" rel="noreferrer" class="contact-pill">
+                    Behance
+                </a>
+                <a href="https://github.com" target="_blank" rel="noreferrer" class="contact-pill">
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+<div id="footer-placeholder"></div>
+<script>
+    fetch(`${pathPrefix}footer.html`)
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("footer-placeholder").innerHTML = data;
+        })
+        .catch(err => console.error("Error loading footer:", err));
+</script>
+<script>
+    (function () {
+        // 1) E-Mail "versteckt" zusammensetzen
+        const user = "vasiurahela";
+        const domain = "gmail.com";
+        const addr = `${user}@${domain}`;
+
+        // 2) Link im Text "Prefer email?" setzen
+        const span = document.getElementById("email-link");
+        if (span) {
+            span.innerHTML = `<a href="mailto:${addr}">${addr}</a>`;
+        }
+
+        // 3) Formular abfangen
+        const form = document.getElementById("contact-form");
+        if (!form) return;
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const name    = form.name.value.trim();
+            const email   = form.email.value.trim();
+            const topic   = form.topic.value;
+            const message = form.message.value.trim();
+
+            const topicLabel = {
+                project:  "Project / Collaboration",
+                job:      "Job opportunity",
+                question: "Question",
+                other:    "Other"
+            }[topic] || "Inquiry";
+
+            const subject = `New ${topicLabel} from ${name || "your portfolio"}`;
+
+            const body = [
+                message,
+                "",
+                "—",
+                name ? `${name} · ${email}` : email,
+                `Topic: ${topicLabel}`
+            ].join("\n");
+
+            const mailtoUrl =
+                `mailto:${addr}` +
+                `?subject=${encodeURIComponent(subject)}` +
+                `&body=${encodeURIComponent(body)}`;
+
+            window.location.href = mailtoUrl;
+        });
+    })();
+</script>
+
+</body>
+</html>

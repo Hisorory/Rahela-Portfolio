@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Detail | Rahela Vasiu</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="detail.css" />
+  <script defer src="detail.js"></script>
+</head>
+<body class="detail-page">
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+
+<script>
+  const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+  fetch(`${pathPrefix}navbar.html`)
+          .then(res => res.text())
+          .then(data => document.getElementById("navbar-placeholder").innerHTML = data);
+</script>
+
+<!-- === PROJECT DETAIL CONTENT === -->
+<main id="project-detail" class="project-detail-page">
+  <div class="loading">Loading project...</div>
+</main>
+
+<!-- Footer -->
+<div id="footer-placeholder"></div>
+<script>
+  fetch(`${pathPrefix}footer.html`)
+          .then(res => res.text())
+          .then(data => document.getElementById("footer-placeholder").innerHTML = data);
+</script>
+
+</body>
+</html>

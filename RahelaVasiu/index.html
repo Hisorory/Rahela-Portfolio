@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rahela Vasiu</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <!-- Import Maps for Three.js -->
+  <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body class="home">
+
+<!-- Top Navigation -->
+<div id="navbar-placeholder"></div>
+
+<script>
+  // === universal include system ===
+  const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+
+  fetch(`${pathPrefix}navbar.html`)
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("navbar-placeholder").innerHTML = data;
+
+            // highlight active page
+            const current = location.pathname.split("/").pop();
+            document
+                    .querySelectorAll(".top-nav a")
+                    .forEach(link => {
+                      if (link.getAttribute("href") === current) {
+                        link.classList.add("active");
+                      }
+                    });
+          })
+          .catch(err => console.error("Error loading navbar:", err));
+</script>
+
+<!-- Radial Navigation -->
+<nav class="radial-nav" aria-label="Section wheel">
+  <div class="radial-nav__wrap">
+    <div class="glass">
+      <div class="radial-nav__dial" id="dial">
+        <svg id="navSvg" viewBox="0 0 500 500" aria-hidden="true"></svg>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<main id="home" class="hero">
+  <div class="hero-text">
+    <h1>Bringing ideas<br>to life</h1>
+    <p>Design. Code. Curiosity.<br>That's what I build with.</p>
+    <button>Let's go <span class="arrow">➜</span></button>
+  </div>
+
+  <div class="blob-wrapper">
+    <div id="glass-blob" aria-hidden="true"></div>
+    <a class="skill-badge" href="assistant.html">Ask about my skills <span class="dot"></span></a>
+  </div>
+</main>
+
+
+<section id="about" class="about-section">
+  <div class="container">
+    <h2 class="about-title">About Me</h2>
+
+    <!-- Intro -->
+    <div class="about-content">
+      <div class="about-text">
+        <p>
+          Hey, I’m Rahela — a creative mind with a thing for turning complex problems into
+          clear, human solutions.
+          I’m currently combining <b>Artificial Intelligence</b> and <b>Psychology</b> to
+          understand both how we think and how machines learn, so I can design
+          smart technology that actually helps people instead of overwhelming them.
+        </p>
+
+        <p>
+          My journey blends <b>design</b>, <b>tech</b>, and <b>human behavior</b> — because
+          solving real needs means understanding how people feel, think, and interact.
+          Whether it’s a digital interface or an AI concept, I’m all about building things that
+          <i>make sense, feel right, and do good.</i>
+        </p>
+      </div>
+
+      <div class="about-photo">
+        <img src="images/Rahela Foto.jpg" alt="Rahela Vasiu portrait" />
+      </div>
+    </div>
+
+    <h3 class="journey-title">My Journey</h3>
+
+    <div class="timeline">
+      <!-- JKU + Fernuni -->
+      <div class="timeline-item left">
+        <div class="timeline-date">10/2025 — Present</div>
+        <div class="timeline-dot"></div>
+        <div class="timeline-desc glow">
+          <h4>JKU Linz & FernUni Hagen</h4>
+          <p>Artificial Intelligence & Psychology</p>
+          <div class="more-info">
+            Studying both to merge human understanding with intelligent systems —
+            designing tech that’s intuitive, empathetic, and genuinely useful.
+          </div>
+        </div>
+      </div>
+
+      <!-- Hagenberg -->
+      <div class="timeline-item right">
+        <div class="timeline-desc glow">
+          <h4>FH Hagenberg</h4>
+          <p>Design of Digital Products (BSc)</p>
+          <div class="more-info">
+            Focused on creative coding, UX, and motion design — learned to combine
+            aesthetics with functionality and discovered my love for interactive visuals.
+          </div>
+        </div>
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">10/2022 — 07/2025</div>
+      </div>
+
+      <!-- Lernquadrat -->
+      <div class="timeline-item left">
+        <div class="timeline-date">04/2024 — Present</div>
+        <div class="timeline-dot"></div>
+        <div class="timeline-desc glow">
+          <h4>Lernquadrat</h4>
+          <p>Part-time Tutor in German, English & Math</p>
+          <div class="more-info">
+            Teaching sharpened my ability to communicate ideas clearly and adapt
+            explanations to different minds — skills I now use in UI and UX work.
+          </div>
+        </div>
+      </div>
+
+      <!-- Expert Wild -->
+      <div class="timeline-item right">
+        <div class="timeline-desc glow">
+          <h4>Expert Wild</h4>
+          <p>Summer Internship</p>
+          <div class="more-info">
+            Got my first hands-on experience working in a creative tech environment —
+            where I learned how design and development teams actually sync in real projects.
+          </div>
+        </div>
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">08/2022 — 09/2022</div>
+      </div>
+
+      <!-- Gymnasium -->
+      <div class="timeline-item left">
+        <div class="timeline-date">09/2014 — 05/2022</div>
+        <div class="timeline-dot"></div>
+        <div class="timeline-desc glow">
+          <h4>Gymnasium Werndlpark</h4>
+          <p>Focus: Art, Media & Design</p>
+          <div class="more-info">
+            That’s where it all started — my first experiments with digital art and visual
+            storytelling. It sparked the curiosity that still drives everything I do.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-summary">
+      <p>
+        Always curious. Always learning.
+        Currently exploring how <b>AI</b> can adapt to <b>real human needs</b> —
+        not the other way around.
+      </p>
+    </div>
+  </div>
+
+  <div class="cv-download">
+    <a href="assets/RahelaVasiu_CV.pdf" download class="cv-btn">
+      <span>Download full CV</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    </a>
+  </div>
+</section>
+<!-- Projects -->
+<section id="projects" class="projects">
+  <div class="projects-head">
+    <h2>Projects</h2>
+    <p class="sub">A slice of the work I’m most proud of.</p>
+    <div class="controls">
+      <button class="nav prev" aria-label="Scroll left">‹</button>
+      <button class="nav next" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+
+  <div class="rail" id="projectsRail" tabindex="0" aria-label="Featured projects">
+    <!-- 1) Doopamine — hero -->
+    <article class="card">
+      <img src="images/projects/doopamine.png" alt="Doopamine productivity app screens" />
+      <div class="card-body">
+        <h3>Doopamine</h3>
+        <p>Productivity app designed around real human needs. Concept → UX → dev, with a psychology-first approach.</p>
+        <div class="actions">
+          <a href="detail.html?id=doopamine" class="btn project-link">Learn More</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 2) POI Tool (Porsche) -->
+    <article class="card">
+      <img src="images/projects/poi-tool.png" alt="POI idea collection tool mockups" />
+      <div class="card-body">
+        <h3>POI Tool for Collecting Ideas</h3>
+        <p>Collaboration with Porsche Informatics. IA, prototyping, and Scrum leadership to structure idea intake.</p>
+        <div class="actions">
+          <a href="detail.html?id=poi-tool" class="btn project-link">Learn More</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3) Zukunftsviertel -->
+    <article class="card">
+      <img src="images/projects/zukunftsviertel.png" alt="Zukunftsviertel website screens" />
+      <div class="card-body">
+        <h3>Zukunftsviertel</h3>
+        <p>Platform supporting local farmers & residents. Stakeholder workflows, sustainable impact, clean UX.</p>
+        <div class="actions">
+          <a href="detail.html?id=zukunftsviertel" class="btn project-link">Learn More</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 4) Mon Éclat -->
+    <article class="card">
+      <img src="images/projects/ME.png" alt="Mon Éclat brand identity preview" />
+      <div class="card-body">
+        <h3>Mon Éclat</h3>
+        <p>Elegant brand identity for confidence & beauty. CI system, typography, color, and collateral.</p>
+        <div class="actions">
+          <a href="detail.html?id=moneclat" class="btn project-link">Learn More</a>
+          <a href="assets/MonEclat_CI.pdf" class="link" download>Download CI</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 5) Carmore -->
+    <article class="card">
+      <img src="images/projects/carmore.png" alt="Carmore Flutter app UI screens" />
+      <div class="card-body">
+        <h3>Carmore</h3>
+        <p>Flutter app for car maintenance & warning symbols. Practical flows, crisp mobile UI.</p>
+        <div class="actions">
+          <a href="detail.html?id=carmore" class="btn project-link">Learn More</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- View All -->
+    <article class="card view-all" aria-label="View all projects">
+      <div class="view-all-inner">
+        <h3>View All Projects</h3>
+        <p>See the full archive, including early concepts like Lost &amp; Found.</p>
+        <a class="btn big" href="projects.html">Open Gallery</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<script>
+  (function(){
+    const rail = document.getElementById('projectsRail');
+    const prev = document.querySelector('.projects .prev');
+    const next = document.querySelector('.projects .next');
+
+    function cardWidth(){
+      // width of one snap including gap
+      const first = rail.querySelector('.card');
+      if(!first) return 400;
+      const style = getComputedStyle(rail);
+      const gap = parseFloat(style.columnGap || style.gap || 0);
+      return first.getBoundingClientRect().width + gap;
+    }
+
+    function updateButtons(){
+      if(!prev || !next) return;
+      const max = rail.scrollWidth - rail.clientWidth - 2;
+      prev.disabled = rail.scrollLeft <= 2;
+      next.disabled = rail.scrollLeft >= max;
+    }
+
+    function scrollByCards(dir){
+      rail.scrollBy({ left: dir * cardWidth(), behavior: 'smooth' });
+      setTimeout(updateButtons, 260);
+    }
+
+    // arrows
+    prev?.addEventListener('click', ()=>scrollByCards(-1));
+    next?.addEventListener('click', ()=>scrollByCards( 1));
+
+    // mouse wheel → horizontal
+
+</script>
+
+<!-- Contact -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <div class="cta-main">
+      <!-- LEFT: copy + main CTA -->
+      <div class="cta-copy">
+        <p class="eyebrow">OPEN FOR COLLABORATIONS</p>
+        <h2 class="cta-title">Feels like the right fit?</h2>
+        <p class="cta-subtitle">
+          Let’s connect and see what we can build together.
+        </p>
+
+        <div class="cta-actions">
+          <button class="btn big" onclick="window.location.href='contact.html'">
+            Start a conversation
+          </button>
+          <button class="cta-ghost"
+                  onclick="window.location.href='mailto:vasiurahela@gmail.com'">
+            Or write an email directly
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: services + assistant -->
+      <div class="cta-services">
+        <p class="cta-label">I usually help with</p>
+        <div class="cta-tags">
+          <span class="cta-pill">Product UX & flows</span>
+          <span class="cta-pill">Web & interface design</span>
+          <span class="cta-pill">Design systems</span>
+          <span class="cta-pill">Brand & visual identity</span>
+          <span class="cta-pill">App Design and Development</span>
+          <span class="cta-pill">Experimental ideas & side projects</span>
+        </div>
+
+        <button class="assistant-pill" id="assistant-trigger">
+          <span class="dot"></span>
+          Not sure what you need? Ask my assistant
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Scripts -->
+<script type="module" src="blob.js"></script>
+<script src="nav.js"></script>
+<script src="main.js"></script>
+<div id="footer-placeholder"></div>
+<script>
+  fetch(`${pathPrefix}footer.html`)
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("footer-placeholder").innerHTML = data;
+          })
+          .catch(err => console.error("Error loading footer:", err));
+
+  const trigger = document.getElementById("assistant-trigger");
+  if (trigger) {
+    trigger.addEventListener("click", () => {
+      // TODO: hier später dein Chat-Widget öffnen
+      console.log("Open assistant");
+    });
+  }
+</script>
+<script>
+  // dieser Code läuft direkt, weil das Script ganz am Ende steht
+  document.querySelectorAll(".rail .card .btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();      // falls irgendwer im Parent rumspielt
+      const href = btn.getAttribute("href");
+      if (href) {
+        window.location.href = href;  // HARTE Navigation
+      }
+    });
+  });
+</script>
+</body>
+</html>

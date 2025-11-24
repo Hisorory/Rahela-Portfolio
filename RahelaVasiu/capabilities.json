@@ -1,0 +1,20 @@
+{
+  "languages": ["de", "en"],
+  "topics": {
+    "websites": {
+      "doctor_practice": true,
+      "small_business": true,
+      "ecommerce": true,
+      "chatbot_add": true
+    },
+    "design": {
+      "branding": true,
+      "adobe": true,
+      "uiux": true
+    },
+    "dev": {
+      "linux_admin": false
+    }
+  },
+  "fallback_contact": { "email": "vasiurahela@gmail.com" }
+}

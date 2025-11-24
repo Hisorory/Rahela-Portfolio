@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Skills – Blobfolio</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="skills.css">
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<!-- Top Nav -->
+<div id="navbar-placeholder"></div>
+
+<script>
+  // === universal include system ===
+  const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+
+  fetch(`${pathPrefix}navbar.html`)
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("navbar-placeholder").innerHTML = data;
+
+            // highlight active page
+            const current = location.pathname.split("/").pop();
+            document
+                    .querySelectorAll(".top-nav a")
+                    .forEach(link => {
+                      if (link.getAttribute("href") === current) {
+                        link.classList.add("active");
+                      }
+                    });
+          })
+          .catch(err => console.error("Error loading navbar:", err));
+</script>
+
+<main class="page" id="top">
+  <!-- Header -->
+  <div class="headline">
+    <div>
+      <h1>Skills</h1>
+      <div class="sub">Stack, Tools & Superpowers</div>
+    </div>
+    <div class="actions">
+      <a class="btn" href="projects.html">See Projects</a>
+      <a class="btn" href="contact.html">Hire Me</a>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <label class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#a7c4cf" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 5L20.5 19l-5-5m-6 0C7 14 5 12 5 9.5S7 5 9.5 5 14 7 14 9.5 12 14 9.5 14z"/></svg>
+      <input id="search" type="text" placeholder="Search skills, e.g. React, UI, Node…" />
+    </label>
+    <div class="tags" id="tags"></div>
+  </div>
+
+  <!-- Grid -->
+  <section class="grid" id="grid"></section>
+
+  <p class="footnote">Tip: Use the filters or search to find what you need fast.</p>
+</main>
+
+<!-- Chat Floating Button linking to Assistant Page -->
+<div class="bot__fab" aria-live="polite">
+  <a href="assistant.html" class="bot__toggle" aria-label="Open assistant">
+    💬
+  </a>
+
+  <div class="bot__whisper" id="botWhisper" aria-hidden="true">
+    <span data-text="Ask about my skills">Ask about my skills</span>
+  </div>
+</div>
+
+<script>
+  // split the whisper text into letter spans for staggered reveal
+  (() => {
+    const el = document.querySelector('#botWhisper span');
+    if(!el) return;
+    const txt = el.getAttribute('data-text') || el.textContent;
+    el.textContent = '';
+    [...txt].forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.style.setProperty('--i', i);
+      s.textContent = ch;
+      el.appendChild(s);
+    });
+  })();
+
+  // "peek" animation on mobile
+  (() => {
+    const fab = document.querySelector('.bot__fab');
+    if(!fab) return;
+    let t;
+    const peek = () => {
+      fab.classList.add('is-peek');
+      clearTimeout(t);
+      t = setTimeout(()=> fab.classList.remove('is-peek'), 1200);
+    };
+    fab.addEventListener('touchstart', peek, { passive:true });
+  })();
+</script>
+
+<!-- Fuse.js -->
+<script src="https://unpkg.com/fuse.js@6.6.2"></script>
+
+<script>
+  /* ========= DATA ========= */
+  const SKILLS = [
+    { name: "JavaScript", level: 90, area:"frontend", tags:["Async/Await","Fetch API","Local Storage"]},
+    { name: "TypeScript", level: 78, area:"frontend", tags:["Types","Generics","Vite"] },
+    { name: "CSS / Tailwind", level: 88, area:"frontend", tags:["Responsive","Grid","Animations","Glassmorphism"] },
+    { name: "UI/UX", level: 82, area:"design", tags:["Wireframes","Design Systems","Prototyping"] },
+    { name: "Figma", level: 77, area:"design", tags:["Auto-layout","Components","Handoff"] },
+    { name: "Git & GitHub", level: 84, area:"workflow", tags:["PRs","Reviews","Actions"] },
+    { name: "Flutter", level: 83, area:"development", tags:["Widgets","Code-Split","Animations"] },
+    { name: "java", level: 83, area:"Backend", tags:["Classes & Objects","Arrays","Loops"] },
+    { name: "Agile Project Management", level: 90, area:"workflow", tags:["Scrum","Kanban","Retrospectives"] },
+    { name: "Graphic Design", level: 93, area:"Design", tags:["Branding","Color Theory","Marketing Visuals"] },
+    { name: "Adobe Creative Suite", level: 80, area:"Design", tags:["Photoshop","Illustrator","InDesign"] },
+
+
+  ];
+  const AREAS = [
+    { id:"frontend", label:"Frontend" },
+    { id:"backend",  label:"Backend" },
+    { id:"design",   label:"Design" },
+    { id:"workflow", label:"Workflow" },
+    { id:"development", label:"development" },
+  ];
+
+  /* ========= FILTER UI ========= */
+  const tagsEl = document.getElementById('tags');
+  AREAS.forEach(a=>{
+    const b = document.createElement('button');
+    b.className = 'tag';
+    b.textContent = a.label;
+    b.dataset.id = a.id;
+    b.addEventListener('click', ()=>{
+      b.classList.toggle('active');
+      renderGrid();
+    });
+    tagsEl.appendChild(b);
+  });
+
+  /* ========= GRID RENDER ========= */
+  const grid = document.getElementById('grid');
+  const search = document.getElementById('search');
+
+  function renderGrid() {
+    const activeAreas = [...document.querySelectorAll('.tag.active')].map(
+            (t) => t.dataset.id
+    );
+    const q = (search.value || "").trim().toLowerCase();
+
+    const rows = SKILLS.filter((s) => {
+      const inArea = activeAreas.length ? activeAreas.includes(s.area) : true;
+
+      const tagMatch = Array.isArray(s.tags)
+              ? s.tags.some((t) => t.toLowerCase().includes(q))
+              : false;
+
+      const inSearch = q
+              ? s.name.toLowerCase().includes(q) || tagMatch
+              : true;
+
+      return inArea && inSearch;
+    });
+
+    // Grid leeren
+    grid.innerHTML = "";
+
+    // EINMAL über rows loopen, nicht verschachtelt
+    rows.forEach((s) => {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const h = document.createElement("h3");
+      h.textContent = s.name;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = s.area[0].toUpperCase() + s.area.slice(1);
+
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      const fill = document.createElement("span");
+      fill.style.width = "0%";
+      requestAnimationFrame(() =>
+              requestAnimationFrame(() => (fill.style.width = s.level + "%"))
+      );
+      bar.appendChild(fill);
+
+      card.append(h, meta, bar);
+
+      // Tags nur rendern, wenn es welche gibt
+      if (Array.isArray(s.tags) && s.tags.length) {
+        const pills = document.createElement("div");
+        pills.className = "pillrow";
+
+        s.tags.forEach((t) => {
+          const p = document.createElement("span");
+          p.className = "pill";
+          p.textContent = t;
+          pills.appendChild(p);
+        });
+
+        card.appendChild(pills);
+      }
+
+      grid.appendChild(card);
+    });
+
+  }
+  search.addEventListener('input', renderGrid);
+  renderGrid();
+
+  /* ========= CHAT WIDGET ========= */
+  const botToggle = document.getElementById('botToggle');
+  const botPanel  = document.getElementById('botPanel');
+  const botClose  = document.getElementById('botClose');
+  const botForm   = document.getElementById('botForm');
+  const botInput  = document.getElementById('botInput');
+  const botLog    = document.getElementById('botMessages');
+
+  const openBot = () => { botPanel.hidden = false; botToggle.setAttribute('aria-expanded','true'); botInput.focus(); };
+  const closeBot = () => { botPanel.hidden = true; botToggle.setAttribute('aria-expanded','false'); };
+
+  botToggle.addEventListener('click', openBot);
+  botClose.addEventListener('click', closeBot);
+  window.addEventListener('keydown', e => { if(e.key === 'Escape' && !botPanel.hidden) closeBot(); });
+
+  const addMsg = (txt, who='bot')=>{
+    const div = document.createElement('div');
+    div.className = `bot__msg bot__msg--${who}`;
+    div.textContent = txt;
+    botLog.appendChild(div);
+    botLog.scrollTop = botLog.scrollHeight;
+  };
+
+  // Initial greeting
+  addMsg("Hi! Ask me about my stack, tools, or experience.");
+
+  // Load knowledge base
+  let KB = [];
+  (async () => {
+    try {
+      const res = await fetch('skills_kb.json', {cache:'no-store'});
+      KB = await res.json();
+    } catch(e){ console.warn('KB load failed', e); }
+  })();
+
+  // Fuse instance (init when KB ready)
+  let fuse = null;
+  const ensureFuse = () => {
+    if (!fuse && KB.length){
+      fuse = new Fuse(KB, {
+        includeScore: true,
+        threshold: 0.4,
+        keys: [
+          { name: 'q', weight: 0.7 },
+          { name: 'a', weight: 0.3 }
+        ]
+      });
+    }
+  };
+
+  botForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const q = (botInput.value||'').trim();
+    if(!q) return;
+    addMsg(q, 'user');
+    botInput.value = '';
+
+    ensureFuse();
+
+    if (fuse){
+      const res = fuse.search(q).sort((a,b)=> a.score-b.score);
+      if(res.length && res[0].score < 0.45){
+        addMsg(res[0].item.a);
+        return;
+      }
+    }
+    // fallback hint
+    const hint = KB.find(item => q.toLowerCase().includes((item.q.split(' ')[0]||'').toLowerCase()));
+    addMsg(hint
+            ? hint.a
+            : "Not sure yet. Try asking about React, TypeScript, Three.js, CSS/Tailwind, or backend.");
+  });
+
+</script>
+<script>
+  // split the whisper text into letter spans for staggered reveal
+  (() => {
+    const el = document.querySelector('#botWhisper span');
+    if(!el) return;
+    const txt = el.getAttribute('data-text') || el.textContent;
+    el.textContent = '';
+    [...txt].forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.style.setProperty('--i', i);
+      s.textContent = ch;
+      el.appendChild(s);
+    });
+  })();
+
+  // small "peek" on tap (mobile) so Nutzer sehen den Hinweis
+  (() => {
+    const fab = document.querySelector('.bot__fab');
+    if(!fab) return;
+    let t;
+    const peek = () => {
+      fab.classList.add('is-peek');
+      clearTimeout(t);
+      t = setTimeout(()=> fab.classList.remove('is-peek'), 1200);
+    };
+    fab.addEventListener('touchstart', peek, {passive:true});
+  })();
+</script>
+<section class="assistant-cta">
+  <p>
+    Not sure if I have what you need?
+    <a href="assistant.html">Ask my assistant →</a>
+  </p>
+</section>
+<div id="footer-placeholder"></div>
+<script>
+  fetch(`${pathPrefix}footer.html`)
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("footer-placeholder").innerHTML = data;
+          })
+          .catch(err => console.error("Error loading footer:", err));
+</script>
+</body>
+</html>

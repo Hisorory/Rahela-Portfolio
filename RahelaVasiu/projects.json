@@ -1,0 +1,121 @@
+[
+  {
+    "id": "doopamine",
+    "title": "Doopamine",
+    "category": ["development", "design"],
+    "tags": ["Design", "UX", "Flutter"],
+    "layout": "phone",
+    "thumbnail": "images/projects/doopamine.png",
+    "slogan": "Because <span>brilliance</span> has its own way.",
+    "subtitle": "A task management app designed to help users stay focused and motivated — combining psychology, minimalism and tech.",
+    "heroType": "video",
+    "heroMedia": "videos/doopaminevideo.mp4",
+    "details": {
+      "phoneMedia": "videos/demo.mov",
+      "description": "A productivity app that turns motivation into a habit through behavioral design and gamified progress tracking.",
+      "longDesc": "Doopamine was born from the question: 'Why do we procrastinate?' It rethinks productivity by merging cognitive psychology with clean UX to create flow. The app adapts to user behavior, rewarding focus and consistent small wins over empty streaks.",
+      "tools": ["React Native", "Figma", "UX Psychology", "Mobile Design"],
+      "gallery": [
+        "videos/Produktvision.mp4",
+        "videos/Ranking List.mp4"
+      ]
+    }
+  },
+  {
+    "id": "moneclat",
+    "title": "Mon Éclat",
+    "category": "design",
+    "tags": ["Branding", "CI Design"],
+    "layout": "standard",
+    "thumbnail": "images/projects/ME.png",
+    "slogan": "Elegance meets identity.",
+    "heroType": "image",
+    "heroMedia": "images/projects/ME.png",
+    "details": {
+      "description": "A brand identity project exploring elegance, confidence, and visual storytelling for a fictional beauty brand.",
+      "longDesc": "Mon Éclat reimagines the relationship between aesthetics and self-expression. Every design element — from logo to typography — reflects inner strength, beauty, and individuality.",
+      "tools": ["Illustrator", "Photoshop", "Brand Strategy"],
+      "gallery": [
+        "images/projects/moneclat1.png",
+        "images/projects/moneclat4.png"
+      ],
+      "ciLink": "images/projects/Mon Eclat styleguide.pdf",
+      "ciLabel": "View full CI"
+    }
+  },
+  {
+    "id": "lostfound",
+    "title": "Lost & Found",
+    "category": "design",
+    "tags": ["UI Design", "App Concept"],
+    "layout": "standard",
+    "thumbnail": "images/projects/lost.png",
+    "slogan": "Never lose what matters.",
+    "heroType": "image",
+    "heroMedia": "images/projects/lost.png",
+    "details": {
+      "description": "An app concept to help users track, report, and find lost items through an intuitive, community-based interface.",
+      "longDesc": "Lost & Found was designed to bring simplicity and calm to a stressful process. Focused on clarity and accessibility, the app enables fast item reporting, geolocation-based searches, and smooth user collaboration.",
+      "tools": ["Figma", "Prototyping", "Design Systems"],
+      "gallery": [
+        "images/projects/registrieren.png",
+        "images/projects/Neue gesuchte Gegenstände.png"
+      ]
+    }
+  },
+  {
+    "id": "poi-tool",
+    "title": "POI Tool for Collecting Ideas",
+    "category": "development",
+    "tags": ["Java", "SQL", "Scrum"],
+    "layout": "standard",
+    "thumbnail": "images/projects/poi-tool.png",
+    "heroType": "image",
+    "heroMedia": "images/projects/poi-tool.png",
+    "details": {
+      "description": "A collaboration with Porsche Informatics to develop an internal tool for collecting and managing innovation ideas.",
+      "longDesc": "The POI Tool helps large teams capture and structure innovative ideas across departments. My role focused on user flow optimization and database efficiency while working within an agile SCRUM team.",
+      "tools": ["Java", "SQL", "Scrum", "UI Design"],
+      "gallery": [
+
+      ]
+    }
+  },
+  {
+    "id": "carmore",
+    "title": "Carmore",
+    "category": "development",
+    "tags": ["Flutter"],
+    "layout": "standard",
+    "thumbnail": "images/projects/carmore.png",
+    "heroType": "image",
+    "heroMedia": "images/projects/carmore.png",
+    "details": {
+      "description": "A mobile app simplifying car maintenance and decoding warning symbols for everyday drivers.",
+      "longDesc": "Carmore empowers users to understand their vehicles better. Built with Flutter and Firebase, it integrates dynamic warning symbol explanations, maintenance tracking, and cloud-based reminders.",
+      "tools": ["Flutter", "Firebase", "UX Research"],
+      "gallery": [
+        "images/projects/4.png",
+        "images/projects/5.png"
+      ]
+    }
+  },
+  {
+    "id": "zukunftsviertel",
+    "title": "Zukunftsviertel",
+    "category": "management",
+    "tags": ["Web", "Project Management"],
+    "layout": "standard",
+    "thumbnail": "images/projects/zukunftsviertel.png",
+    "heroType": "image",
+    "heroMedia": "images/projects/zukunftsviertel.png",
+    "details": {
+      "description": "A community-driven website connecting local farmers and residents of the Mostviertel region.",
+      "longDesc": "Zukunftsviertel promotes sustainable development by linking local producers, residents, and events. As project manager and designer, I focused on balancing business goals, UX clarity, and technical feasibility.",
+      "tools": ["HTML", "CSS", "PM", "Wireframing"],
+      "gallery": [
+
+      ]
+    }
+  }
+]

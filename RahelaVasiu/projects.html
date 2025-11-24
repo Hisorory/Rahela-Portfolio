@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects | Rahela Vasiu</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css">
+  <script defer src="projects.js"></script>
+</head>
+<body class="projects">
+<!-- === Top Navbar === -->
+<div id="navbar-placeholder"></div>
+
+<script>
+  // === universal include system ===
+  const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+
+  fetch(`${pathPrefix}navbar.html`)
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("navbar-placeholder").innerHTML = data;
+
+            // highlight active page
+            const current = location.pathname.split("/").pop();
+            document
+                    .querySelectorAll(".top-nav a")
+                    .forEach(link => {
+                      if (link.getAttribute("href") === current) {
+                        link.classList.add("active");
+                      }
+                    });
+          })
+          .catch(err => console.error("Error loading navbar:", err));
+</script>
+
+<!-- === Projects Section === -->
+<section class="projects-page">
+  <h1 class="projects-title">My Projects</h1>
+  <p class="projects-subtitle">A mix of design, development, and human-centered innovation.</p>
+
+  <!-- Filter Buttons -->
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="design">Design</button>
+    <button class="filter-btn" data-filter="development">Development</button>
+    <button class="filter-btn" data-filter="management">Project Management</button>
+  </div>
+
+  <!-- Projects Grid -->
+  <div class="projects-grid"></div>
+</section>
+<div id="footer-placeholder"></div>
+<script>
+  fetch(`${pathPrefix}footer.html`)
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("footer-placeholder").innerHTML = data;
+          })
+          .catch(err => console.error("Error loading footer:", err));
+</script>
+</body>
+</html>

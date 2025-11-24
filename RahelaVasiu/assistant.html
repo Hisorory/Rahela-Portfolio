@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assistant – Rahela Vasiu</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Fuse.js (falls schon woanders geladen, Zeile entfernen) -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+</head>
+<body class="assistant-page">
+
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+<script>
+    const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+    fetch(`${pathPrefix}navbar.html`)
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("navbar-placeholder").innerHTML = data;
+            const current = location.pathname.split("/").pop();
+            document.querySelectorAll(".top-nav a").forEach(link => {
+                if (link.getAttribute("href") === current) link.classList.add("active");
+            });
+        })
+        .catch(err => console.error("Error loading navbar:", err));
+</script>
+
+<main class="assistant-main">
+
+    <div class="bot__beta-note">
+        ⚠️ This assistant is in development — errors may occur.
+    </div>
+
+    <a href="index.html" class="assistant-back">
+        <span class="assistant-back-arrow">‹</span>
+        <span>Back</span>
+    </a>
+
+    <section class="assistant-intro">
+        <div class="assistant-top-row">
+            <div class="bot__lang-switch" aria-label="Language">
+                <button type="button" class="bot__lang-btn is-active" data-lang="en">EN</button>
+                <button type="button" class="bot__lang-btn" data-lang="de">DE</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="bot__panel" id="botPanel">
+        <div class="bot__messages" id="botMessages"></div>
+        <form class="bot__form" id="botForm" autocomplete="off">
+            <input id="botInput" type="text" placeholder="Ask me something…" required />
+            <button type="submit" aria-label="Send">➤</button>
+        </form>
+        <div class="bot__hint">
+            Try: “Can you design a website for a doctor’s office?” or “Do you work with Adobe tools?”
+        </div>
+    </section>
+</main>
+
+<script>
+    // ---------- DOM refs ----------
+    const botForm  = document.getElementById('botForm');
+    const botInput = document.getElementById('botInput');
+    const botLog   = document.getElementById('botMessages');
+    const botHint  = document.querySelector('.bot__hint');
+    const langBtns = document.querySelectorAll('.bot__lang-btn');
+
+    // ---------- State ----------
+    let currentLang = 'en';
+    let KB = [];
+    let fuse = null;
+    let CAP  = null;
+
+    let awaitingDetails = false;
+    let emailCTAShown = false;
+    let lastAskedSlot = null;
+
+    // Service: "web" (Website) | "poster" (Poster/Grafik)
+    let currentService = 'web';
+
+    // Session-Kontext (für Personalisierung + E-Mail)
+    const sessionCtx = {
+        type:null, niche:null, timeline:null, scope:null, audience:null, note:null,
+        // poster-specific
+        use:null, size:null, deadline:null, copy:null, assets:null
+    };
+
+    // Slots pro Service
+    const REQUIRED_SLOTS_BY_SERVICE = {
+        web:    ["niche","timeline","scope"],
+        poster: ["use","size","deadline","copy","assets"]
+    };
+
+    // Fortschritts-State
+    let noProgressStreak = 0;
+    function getRequiredSlots(){ return REQUIRED_SLOTS_BY_SERVICE[currentService] || []; }
+    function filledSlotsCount(){ return getRequiredSlots().filter(s => !!sessionCtx[s]).length; }
+    function missingSlots(){ return getRequiredSlots().filter(s => !sessionCtx[s]); }
+    function resetProgress(){ noProgressStreak = 0; }
+    function markNoProgressAndMaybeOfferEmail(){
+        noProgressStreak += 1;
+        if (noProgressStreak >= 1) showEmailCTA();
+    }
+
+    // ---------- Copy ----------
+    const BOT_EXTRAS = {
+        en: { talkMore: "For more detailed or specific requests, let’s talk directly — that way we can plan the best setup for you. You can reach me at <a href='mailto:vasiurahela@gmail.com'>vasiurahela@gmail.com</a>." },
+        de: { talkMore: "Für detailliertere oder sehr spezielle Anfragen lass uns direkt sprechen – so können wir gemeinsam die beste Lösung planen. Schreib mir gerne an <a href='mailto:vasiurahela@gmail.com'>vasiurahela@gmail.com</a>." }
+    };
+
+    const FRAMEWORKS = [
+        {
+            key: "three",
+            keywords: ["three.js", "threejs", "3d library", "webgl 3d"],
+            level: "no",
+            label_en: "Three.js",
+            label_de: "Three.js"
+        },
+        {
+            key: "react",
+            keywords: ["react", "next.js", "nextjs"],
+            level: "learning",
+            label_en: "React / Next.js",
+            label_de: "React / Next.js"
+        },
+        {
+            key: "vue",
+            keywords: ["vue", "nuxt"],
+            level: "no",
+            label_en: "Vue",
+            label_de: "Vue"
+        },
+        {
+            key: "flutter",
+            keywords: ["flutter"],
+            level: "ok",
+            label_en: "Flutter",
+            label_de: "Flutter"
+        }
+        // … kannst du später erweitern
+    ];
+
+    function checkFrameworkQuestion(text) {
+        const t = text.toLowerCase();
+        for (const fw of FRAMEWORKS) {
+            if (fw.keywords.some(k => t.includes(k.toLowerCase()))) {
+                // gefunden → Antwort bauen
+                if (fw.level === "no") {
+                    return currentLang === "de"
+                        ? `Zu ${fw.label_de} arbeite ich aktuell nicht aktiv. Mein Fokus liegt eher auf klassischen Web-Stacks (HTML/CSS/JavaScript) und UX/UI.\n\nWenn dir das Design oder ein simpler Prototyp reicht, kann ich auf jeden Fall helfen – für ein komplexes ${fw.label_de}-Projekt wäre eher ein spezialisierter Dev sinnvoll.`
+                        : `I don’t actively work with ${fw.label_en} right now. My focus is more on classic web stacks (HTML/CSS/JavaScript) and UX/UI.\n\nIf you mainly need design or a simple prototype, I can definitely help — but for a complex ${fw.label_en} build, a specialized developer would be better.`;
+                }
+                if (fw.level === "ok") {
+                    return currentLang === "de"
+                        ? `Mit ${fw.label_de} habe ich Basis- bis Intermediate-Erfahrung. Für kleinere UIs, Prototypen oder einfache Features passt das – für sehr große, komplexe Apps würde ich eher auf simplerem Stack arbeiten oder mit einem Dev zusammenarbeiten.`
+                        : `I have beginner-to-intermediate experience with ${fw.label_en}. It’s fine for smaller UIs, prototypes and simple features — for very large or complex apps I’d prefer a simpler stack or work together with a developer.`;
+                }
+                if (fw.level === "learning") {
+                    return currentLang === "de"
+                        ? `${fw.label_de} schaue ich mir gerade an, es ist aber noch kein “Produktions-Stack” für mich. Wenn dir ein Fokus auf Design/UX wichtig ist und die Implementierung eher schlicht bleiben darf, können wir trotzdem gut zusammenarbeiten.`
+                        : `I’m currently learning ${fw.label_en}, but it’s not my main production stack yet. If you care more about design/UX and can keep the implementation fairly simple, we can still work together.`;
+                }
+            }
+        }
+        return null; // kein Framework erkannt
+    }
+
+
+    const BOT_TEXT = {
+        en: {
+            greeting: "Hi! I’m Rahela’s assistant. Ask me what she can do, or if she’s a good match for your project.",
+            hint: "Try: “Can you design a website for a doctor’s office?” “Can you edit a poster in Photoshop?”",
+            fallback: "I’m not totally sure what you mean. You can ask about websites, UX/UI, branding, Adobe tools or her tech stack.",
+            needMore: "Got it. A bit more detail would help: What’s the goal, target audience, and timeline?",
+            refused: (topic,supported,email) =>
+                `Sorry, I can’t help with that (${topic}). I currently support ${supported}. If you want, I can help with something related — or contact me: <a href="mailto:${email}">${email}</a>.`
+        },
+        de: {
+            greeting: "Hi! Ich bin Rahelas Assistant. Frag mich gerne, was sie kann oder ob sie zu deinem Projekt passt.",
+            hint: "Z.B.: „Kannst du eine Website für eine Arztpraxis machen?“ „Kannst du ein Plakat in Photoshop bearbeiten?“",
+            fallback: "Ich bin mir nicht sicher, was du meinst. Frag gern zu Websites, UX/UI, Branding, Adobe-Tools oder ihrem Tech-Stack.",
+            needMore: "Alles klar. Kurz mehr Kontext: Ziel, Zielgruppe und Zeitrahmen?",
+            refused: (topic,supported,email) =>
+                `Sorry, dabei kann ich nicht helfen (Thema: ${topic}). Aktuell unterstützt sie ${supported}. Gern helfe ich bei etwas Verwandtem – oder schreib direkt: <a href="mailto:${email}">${email}</a>.`
+        }
+    };
+
+    const ANSWER_TEMPLATES = {
+        en: {
+            doctor_practice: `Yes — I can plan and design a clean website for a medical or veterinary practice. Typical scope: structure (services, team, pricing, FAQs), booking/contact, map & opening hours, basic SEO, and privacy/legal pages. Timeline around your 2-month target is realistic.`,
+            small_business: `Yes — I build simple, fast small-business sites (services, about, contact, map, reviews) with clean design and basic SEO.`,
+            ecommerce: `Yes — I can design an e-commerce website and product pages. For payments I typically design around Stripe checkout and a simple catalog.`,
+            branding: `Yes — I do branding: logo, colors, typography and a lightweight style guide.`,
+            adobe: `Yes — I handle Photoshop/Illustrator/InDesign work (posters, flyers, photo edits, print-ready files).`,
+            uiux: `Yes — I design UX/UI in Figma (flows, wireframes, prototypes, design systems).`,
+            chatbot_add: `Yes — I can add a lightweight chatbot to your site. Options:
+• FAQ bot using your content (fast, no server)
+• Contact handoff (collects name/email + message)
+• Language switch (EN/DE)
+• Guardrails (politely refuse off-topic).
+We’d define intents (services, opening hours, pricing range), add your knowledge base, and style it to your brand.`,
+            poster: `Yes — I design posters/graphics (print & social). I’ll ask a few quick things (use, size, deadline, text, assets) and then send you a draft.`
+        },
+        de: {
+            doctor_practice: `Ja — ich plane und gestalte eine klare Website für Arzt- oder Tierarztpraxen. Üblicher Umfang: Struktur (Leistungen, Team, Preise, FAQs), Termin/Kontakt, Karte & Öffnungszeiten, SEO-Basics sowie Datenschutz/Impressum. Zwei Monate sind realistisch.`,
+            small_business: `Ja — ich setze schlanke, schnelle Websites für kleine Unternehmen um (Leistungen, Über mich, Kontakt, Karte, Bewertungen) inkl. SEO-Basics.`,
+            ecommerce: `Ja — ich gestalte E-Commerce-Seiten und Produktseiten. Bezahlfluss typischerweise mit Stripe und einem einfachen Katalog.`,
+            branding: `Ja — ich mache Branding: Logo, Farben, Typografie und einen kompakten Styleguide.`,
+            adobe: `Ja — ich übernehme Photoshop/Illustrator/InDesign (Poster, Flyer, Bildbearbeitung, druckfertige Dateien).`,
+            uiux: `Ja — ich gestalte UX/UI in Figma (Flows, Wireframes, Prototypen, Designsysteme).`,
+            chatbot_add: `Ja — ich kann einen schlanken Chatbot auf deiner Website einbauen:
+• FAQ-Bot aus deinen Inhalten (schnell, ohne Server)
+• Kontakt-Handoff (Name/Email + Nachricht)
+• Sprachumschaltung (DE/EN)
+• Guardrails (freundliche Ablehnung bei Off-Topic).
+Wir definieren Intents (Leistungen, Öffnungszeiten, Preisrahmen), füttern die KB und stylen ihn passend.`,
+            poster: `Ja — ich gestalte Poster/Grafiken (Druck & Social). Ich frage kurz nach Nutzung, Größe, Deadline, Text und Assets – dann bekommst du zügig einen Entwurf.`
+        }
+    };
+
+    // ---------- UI helper ----------
+    const addMsg = (txt, who = 'bot') => {
+        const div = document.createElement('div');
+        div.className = `bot__msg bot__msg--${who}`;
+        if (who === 'bot') div.innerHTML = txt; else div.textContent = txt;
+        botLog.appendChild(div);
+        botLog.scrollTop = botLog.scrollHeight;
+    };
+
+    // ---------- Data loading ----------
+    async function loadCAP() {
+        try {
+            const res = await fetch('capabilities.json', { cache: 'no-store' });
+            CAP = res.ok ? await res.json() : null;
+        } catch { CAP = null; }
+    }
+    async function loadUserLearnedKB() {
+        try {
+            const key = `kb_user_${currentLang}`;
+            const arr = JSON.parse(localStorage.getItem(key) || "[]");
+            if (Array.isArray(arr) && arr.length) KB = [...arr, ...KB];
+        } catch {}
+    }
+    async function loadKB() {
+        const fileName = currentLang === 'de' ? 'skills_kb_de.json' : 'skills_kb_en.json';
+        try {
+            const [kbRes] = await Promise.all([
+                fetch(fileName, { cache: 'no-store' }),
+                CAP ? Promise.resolve(null) : loadCAP()
+            ]);
+            if (!kbRes.ok) { KB = []; fuse = null; return; }
+            const data = await kbRes.json();
+            KB = Array.isArray(data) ? data : [];
+            await loadUserLearnedKB();
+            fuse = new Fuse(KB, {
+                includeScore: true, threshold: 0.48, distance: 120,
+                keys: [{ name: 'q', weight: 0.7 }, { name: 'a', weight: 0.3 }]
+            });
+        } catch { KB = []; fuse = null; }
+    }
+
+    // ---------- NLP-ish ----------
+    function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9äöüß\s\-]/gi," "); }
+    const hasAny = (text, arr) => arr.some(w => text.includes(w));
+
+    function classifyTopic(q){
+        const qn = norm(q);
+        const K = {
+            websiteish:["website","webseite","landing","landing page","site","homepage","page","web page"],
+            doctorish:["doctor","clinic","practice","gp","medical","physician","dentist","orthodontist","arzt","arztpraxis","ordination","praxis","medizin","zahnarzt","orthopade","vet","veterinary","veterinarian","animal clinic","animal hospital","pet clinic","tierarzt","tierarztpraxis","tierklinik","tierarzt praxis","tier praxis","vet praxis"],
+            smbish:["business","small business","smb","unternehmen","firma","gewerbe","lokal","laden","store","salon","studio"],
+            shopish:["shop","store","ecommerce","e-commerce","checkout","cart","stripe","paypal","verkauf","kaufen"],
+            branding:["branding","brand","logo","styleguide","ci","corporate identity","marke","markendesign"],
+            adobe:["photoshop","illustrator","indesign","poster","flyer","druck","print","grafik","graphic"],
+            posterish:["poster","plakat","flyer","banner","rollup","roll-up","social post","social media","story","instagram","ig","facebook","tiktok","linkedin","druck","print"],
+            uiux:["ux","ui","figma","wireframe","prototype","prototyp","flow","design system"],
+            chatbotish:["chatbot","chat bot","assistant","faq bot","live chat","kontakt-bot","bot auf der website","chat widget"],
+            devopsBad:["linux","server","root","ssh","kubernetes","k8s","helm","ansible","iptables","raid","nginx config","systemd","kernel","docker swarm"]
+        };
+
+        if (hasAny(qn,K.doctorish) && hasAny(qn,K.websiteish.concat(["site","homepage"])))
+            return { area:"websites", sub:"doctor_practice", label: currentLang==='de'?"Arzt-/Tierarztpraxis-Website":"medical/vet practice website" };
+        if (hasAny(qn,K.shopish) && hasAny(qn,K.websiteish))
+            return { area:"websites", sub:"ecommerce", label:"ecommerce" };
+        if (hasAny(qn,K.posterish))
+            return { area:"design", sub:"poster", label: currentLang==='de' ? "Poster/Plakat" : "poster" };
+        if (hasAny(qn,K.branding)) return { area:"design", sub:"branding", label:"branding" };
+        if (hasAny(qn,K.adobe))    return { area:"design", sub:"adobe",    label:"adobe/graphics" };
+        if (hasAny(qn,K.uiux))     return { area:"design", sub:"uiux",     label:"ux/ui" };
+        if (hasAny(qn,K.chatbotish)) return { area:"websites", sub:"chatbot_add", label: currentLang==='de'?"Chatbot für Website":"website chatbot" };
+
+        if (hasAny(qn,K.doctorish)) return { area:"websites", sub:"doctor_practice", label: currentLang==='de'?"Arzt-/Tierarztpraxis":"medical/vet practice" };
+        if (hasAny(qn,K.websiteish) || hasAny(qn,K.smbish)) return { area:"websites", sub:"small_business", label: currentLang==='de'?"KMU-Website":"small business website" };
+        if (hasAny(qn,K.devopsBad)) return { area:"dev", sub:"linux_admin", label:"linux/admin" };
+        return { area:"unknown", sub:"unknown", label:"unknown" };
+    }
+
+    function isSupported(topic){
+        if (!CAP) return true;
+        const t = CAP.topics?.[topic.area];
+        if (!t) return false;
+        if (topic.sub === "unknown") return false;
+        const val = t[topic.sub];
+        return !!val || (typeof val === "object" && !!val.supported);
+    }
+
+    function supportedList(){
+        if (!CAP) return currentLang==='de'?"Websites, Branding, UX/UI":"websites, branding, UX/UI";
+        const t = CAP.topics, topics=[];
+        if (t.websites?.doctor_practice) topics.push(currentLang==='de'?"Arztpraxis-Websites":"doctor practice sites");
+        if (t.websites?.small_business) topics.push(currentLang==='de'?"KMU-Websites":"small business sites");
+        if (t.websites?.ecommerce) topics.push("ecommerce");
+        if (t.websites?.chatbot_add) topics.push(currentLang==='de'?"Website-Chatbot":"website chatbot");
+        if (t.design?.branding) topics.push("branding");
+        if (t.design?.adobe) topics.push(currentLang==='de'?"Adobe-Grafik":"Adobe graphics");
+        if (t.design?.uiux) topics.push("UX/UI");
+        return topics.join(", ");
+    }
+
+    function detailLevel(text){ const len=text.trim().split(/\s+/).length; if(len>25)return 3; if(len>10)return 2; return 1; }
+
+    function composeAnswer(topic, baseText, lvl){
+        const extras={
+            websites:[
+                "Typical sections: hero, services, team, contact, map, FAQs, legal.",
+                "Tech: static hosting, fast load, basic SEO, analytics opt-in.",
+                "Handover: editable content + quick Loom walkthrough."
+            ],
+            doctor_practice:[
+                "For medical/vet: services catalog, emergency notice, opening hours.",
+                "Privacy: cookie banner, imprint/privacy pages.",
+                "Optional: booking link or form with email handoff."
+            ],
+            chatbot_add:[
+                "Implementation: your current front-end (Fuse KB + intent rules).",
+                "Data: Markdown/JSON KB with last-updated timestamps.",
+                "Safety: capability matrix + refusal templates (EN/DE)."
+            ],
+            poster:[
+                "Deliverables: print-ready PDF or social-ready PNG.",
+                "Bleed/Safe area for print; variants for social if needed.",
+                "Color profiles for print vs. digital."
+            ]
+        };
+        let out=baseText;
+        if(lvl>=2) out += (currentLang==='de'?"\n\n**Ablauf:** Kickoff → Struktur/Design → Umsetzung → Launch.":"\n\n**Process:** Kickoff → Structure/Design → Build → Launch.");
+        if(lvl>=3){ const k=extras[topic.sub]?topic.sub:topic.area; const add=(extras[k]||[]).slice(0,3).map(x=>"• "+x).join("\n"); if(add) out+="\n\n"+add; }
+        return out;
+    }
+
+    function extractSlots(text){
+        const t=text.toLowerCase();
+
+        // Service switch hints
+        if (/(poster|plakat|flyer|banner|roll[\s-]?up|social\s*(post)?|story|instagram|ig|facebook|tiktok|linkedin)/i.test(text)) {
+            currentService = "poster";
+        }
+        if (/(website|webseite|homepage)/i.test(text)) {
+            currentService = "web";
+        }
+
+        // --- Web slots ---
+        if(/website|webseite/.test(t)) sessionCtx.type = currentLang==='de'?"Website":"Website";
+
+        if(/(vet|tierarzt|clinic|studio|praxis|salon|shop|gym|yoga|fitness|dance|schule|school|academy|kurs|course|class|verein|club|dojo|karate|taekwondo|kung\s*fu|bäckerei|baeckerei|bakery)/.test(t)){
+            const m = t.match(/vet|tierarzt|clinic|studio|praxis|salon|shop|gym|yoga|fitness|dance|schule|school|academy|kurs|course|class|verein|club|dojo|karate|taekwondo|kung\s*fu|bäckerei|baeckerei|bakery/);
+            sessionCtx.niche = currentLang==='de' ? (m?.[0]||"Branche") : (m?.[0]||"niche");
+        }
+
+        if(/(\b2\b|\btwo\b)\s*(months|monate)/.test(t)) sessionCtx.timeline = currentLang==='de'?"≈2 Monate":"≈2 months";
+        if(/(asap|sofort)/.test(t)) sessionCtx.timeline = currentLang==='de'?"sofort":"ASAP";
+
+        const add=(de,en)=> sessionCtx.scope ? (sessionCtx.scope+" + "+(currentLang==='de'?de:en)) : (currentLang==='de'?de:en);
+        if(/(wireframe|konzept|structure|konzeption)/.test(t)) sessionCtx.scope = add("Konzept","Concept");
+        if(/(design|gestaltung)/.test(t))                      sessionCtx.scope = add("Design","Design");
+        if(/(implement|umsetzung|development|dev|build)/.test(t)) sessionCtx.scope = add("Umsetzung","Implementation");
+        if(/(branding|logo|ci)/.test(t))                       sessionCtx.scope = add("Branding","Branding");
+        if (/(alles|komplett|rundum|full\s*(service)?|end[-\s]?to[-\s]?end|complete)/i.test(text)) {
+            sessionCtx.scope = currentLang === 'de'
+                ? "Konzept + Design + Umsetzung"
+                : "Concept + Design + Implementation";
+        }
+
+        // --- Poster-specific slots ---
+        if (/(print|druck)/i.test(text)) {
+            sessionCtx.use = sessionCtx.use ? (sessionCtx.use + " + print") : "print";
+        }
+        if (/(digital|social|instagram|ig|story|facebook|tiktok|linkedin)/i.test(text)) {
+            sessionCtx.use = sessionCtx.use ? (sessionCtx.use + " + digital") : "digital";
+        }
+
+        if (/\b(a\d)\b/i.test(text)) sessionCtx.size = text.match(/\b(a\d)\b/i)[1].toUpperCase();
+        if (/\b(\d{3,4})\s?[x×]\s?(\d{3,4})\b/i.test(text)) {
+            const m = text.match(/\b(\d{3,4})\s?[x×]\s?(\d{3,4})\b/i);
+            sessionCtx.size = `${m[1]}x${m[2]}`;
+        }
+        if (/story/i.test(text) && !sessionCtx.size) sessionCtx.size = "1080x1920";
+        if (/(instagram|ig)(?!.*story)/i.test(text) && !sessionCtx.size) sessionCtx.size = "1080x1350";
+
+        if (/(asap|sofort)/i.test(text)) sessionCtx.deadline = currentLang==='de' ? "sofort" : "ASAP";
+        if (/\b(20\d{2})-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])\b/.test(text)) {
+            sessionCtx.deadline = text.match(/\b(20\d{2})-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])\b/)[0];
+        }
+
+        if (/(text|copy|headline)\s*:\s*/i.test(text)) {
+            sessionCtx.copy = text.replace(/.*?(text|copy|headline)\s*:\s*/i, "").slice(0, 500);
+        }
+        if (/(logo|bilder|images|assets)\s*(vorhanden|available|included|habe|have)/i.test(text)) {
+            sessionCtx.assets = currentLang==='de' ? "Assets vorhanden" : "assets available";
+        }
+
+        // Free note
+        if(/(note:|message:)/i.test(text)) {
+            sessionCtx.note = text.replace(/.*?(note:|message:)\s*/i,'').slice(0,280);
+        }
+    }
+
+    function personalize(msg){
+        let m=msg;
+        if(sessionCtx.timeline) m += `\n${currentLang==='de'?"Zeitplan:":"Timeline:"} ${sessionCtx.timeline}.`;
+        if(sessionCtx.niche)    m += `\n${currentLang==='de'?"Branche:":"Niche:"} ${sessionCtx.niche}.`;
+        if(sessionCtx.audience) m += `\n${currentLang==='de'?"Zielgruppe:":"Audience:"} ${sessionCtx.audience}.`;
+        return m;
+    }
+
+    function isComplexQuestion(text){
+        const ql=text.toLowerCase();
+        const topicWords=["website","webseite","app","chatbot","ai","logo","branding","design","seo","database","backend","dashboard","cms","poster","plakat","flyer"];
+        const hits=topicWords.filter(w=>ql.includes(w)).length;
+        return hits>2 || /(too|very)\s+(detailed|complex|specific)/.test(ql);
+    }
+
+    function rememberMapping(query, answer){
+        try{
+            const key=`kb_user_${currentLang}`;
+            const arr=JSON.parse(localStorage.getItem(key)||"[]");
+            arr.unshift({q:query,a:answer,t:Date.now()});
+            localStorage.setItem(key, JSON.stringify(arr.slice(0,50)));
+            KB.unshift({q:query,a:answer});
+            if(fuse?.setCollection) fuse.setCollection(KB);
+        }catch{}
+    }
+
+    function refuse(topic){
+        const email = CAP?.fallback_contact?.email || "vasiurahela@gmail.com";
+        const txt = BOT_TEXT[currentLang].refused(topic.label, supportedList(), email);
+        addMsg(txt,'bot');
+    }
+
+    function needMore(){ addMsg(BOT_TEXT[currentLang].needMore,'bot'); }
+
+    async function switchLanguage(lang){
+        if(lang===currentLang) return;
+        currentLang=lang;
+        langBtns.forEach(btn=>btn.classList.toggle('is-active', btn.dataset.lang===currentLang));
+        botLog.innerHTML=""; emailCTAShown=false;
+        await loadKB();
+        botHint.textContent=BOT_TEXT[currentLang].hint;
+        addMsg(BOT_TEXT[currentLang].greeting);
+        document.querySelector(".bot__beta-note").textContent = BETA_NOTE[currentLang];
+
+    }
+
+    // ---------- Email CTA ----------
+    function buildProjectSummary(ctx){
+        if (currentService === "poster") {
+            return [
+                `Project type: Poster / Graphic`,
+                `Use: ${ctx.use || "-"}`,
+                `Size: ${ctx.size || "-"}`,
+                `Deadline: ${ctx.deadline || "-"}`,
+                `Copy: ${ctx.copy || "-"}`,
+                `Assets: ${ctx.assets || "-"}`,
+                `Extra: ${ctx.note || "(none)"}`
+            ].join("\n");
+        }
+        return [
+            `Project type: ${ctx.type || "Website"}`,
+            `Niche: ${ctx.niche || "-"}`,
+            `Timeline: ${ctx.timeline || "-"}`,
+            `Scope: ${ctx.scope || "-"}`,
+            `Extra: ${ctx.note || "(none)"}`
+        ].join("\n");
+    }
+    function createMailLink(ctx){
+        const subject=encodeURIComponent("Project Inquiry via Assistant");
+        const body=encodeURIComponent(buildProjectSummary(ctx));
+        return `mailto:vasiurahela@gmail.com?subject=${subject}&body=${body}`;
+    }
+    function showEmailCTA(){
+        if(emailCTAShown) return;
+        const link=createMailLink(sessionCtx);
+        const html=`Great! Here’s a quick summary of your project:<br><br>
+<pre>${buildProjectSummary(sessionCtx)}</pre>
+<br>
+You can email this directly to me — just click below 👇<br><br>
+<a href="${link}" class="bot__mail-btn" target="_blank">📨 Send Email</a>`;
+        addMsg(html,'bot');
+        emailCTAShown=true;
+    }
+    function finalizeConversation() {
+        const okMsg = currentLang === 'de'
+            ? (currentService === "poster"
+                ? "Klingt gut — das kann ich übernehmen. Hier ist eine kurze Zusammenfassung, du kannst mir das direkt mailen:"
+                : "Top, das kann ich übernehmen. Hier eine kurze Zusammenfassung — du kannst mir das direkt mailen:")
+            : (currentService === "poster"
+                ? "Nice — I can take this on. Here’s a quick summary; you can email it to me directly:"
+                : "Great — I can take this on. Here’s a quick summary; you can email it to me directly:");
+        addMsg(okMsg, 'bot');
+        showEmailCTA();
+    }
+
+    // gezielte Rückfrage je Service
+    function askNextQuestion() {
+        const [slot] = missingSlots();
+        if (!slot) return false;
+
+        const Q = {
+            web: {
+                en: {
+                    niche:   "Who is the website for (e.g., vet practice, yoga studio, small shop)?",
+                    timeline:"When do you roughly need it (ASAP / 1–2 months / flexible)?",
+                    scope:   "What scope do you want: concept, design, implementation — or all of them?"
+                },
+                de: {
+                    niche:   "Für wen ist die Website (z. B. Tierarztpraxis, Yoga-Studio, kleiner Shop)?",
+                    timeline:"Bis wann ungefähr (ASAP / 1–2 Monate / flexibel)?",
+                    scope:   "Was soll drin sein: Konzept, Design, Umsetzung — oder alles?"
+                }
+            },
+            poster: {
+                en: {
+                    use:     "Is it for print (poster/flyer) or digital (Instagram, story, etc.)?",
+                    size:    "What size do you need (A3/A2 or pixels, e.g., 1080x1350)?",
+                    deadline:"What’s your deadline (ASAP / date)?",
+                    copy:    "Do you have the text (headline, details)? If yes, paste it here.",
+                    assets:  "Do you already have logo/images or should I source stock images?"
+                },
+                de: {
+                    use:     "Ist es für Druck (Poster/Flyer) oder digital (Instagram, Story etc.)?",
+                    size:    "Welche Größe brauchst du (A3/A2 oder Pixel, z. B. 1080x1350)?",
+                    deadline:"Bis wann brauchst du es (ASAP / Datum)?",
+                    copy:    "Hast du den Text (Headline, Details)? Wenn ja, bitte hier einfügen.",
+                    assets:  "Hast du Logo/Bilder schon oder soll ich Stock-Bilder vorschlagen?"
+                }
+            }
+        };
+
+        const block = (Q[currentService] || Q.web)[currentLang];
+        addMsg(block[slot], 'bot');
+        lastAskedSlot = slot;
+        awaitingDetails = true;
+        return true;
+    }
+
+    // ---------- Init ----------
+    (async()=>{
+        langBtns.forEach(btn=>btn.classList.toggle('is-active', btn.dataset.lang===currentLang));
+        await Promise.all([loadCAP(), loadKB()]);
+        botHint.textContent=BOT_TEXT[currentLang].hint;
+        addMsg(BOT_TEXT[currentLang].greeting);
+    })();
+
+    langBtns.forEach(btn=>btn.addEventListener('click',()=>switchLanguage(btn.dataset.lang)));
+
+    // ---------- Main handler ----------
+    botForm.addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const q=(botInput.value||'').trim();
+        if(!q) return;
+
+        addMsg(q,'user');
+        botInput.value='';
+
+        const fwAnswer = checkFrameworkQuestion(q);
+        if (fwAnswer) {
+            addMsg(fwAnswer, 'bot');
+            return; // restliche Logik überspringen
+        }
+        extractSlots(q);
+
+        // ---------- Wenn wir auf Details warten ----------
+        if(awaitingDetails){
+            awaitingDetails=false;
+
+            // 1) KB
+            if(fuse && KB.length){
+                const res=fuse.search(q).sort((a,b)=>a.score-b.score);
+                if(res.length && res[0].score<0.45){
+                    let msg=personalize(res[0].item.a);
+                    addMsg(msg,'bot');
+                    resetProgress();
+                    if(missingSlots().length>0){ askNextQuestion(); }
+                    return;
+                }
+            }
+
+            // Rohübernahme falls direkte Antwort auf gezielte Frage
+            const pre = filledSlotsCount();
+            if (lastAskedSlot && !sessionCtx[lastAskedSlot]) {
+                sessionCtx[lastAskedSlot] = q.trim();
+            }
+            const post = filledSlotsCount();
+            if (post > pre) {
+                resetProgress();
+                lastAskedSlot = null;
+                if (missingSlots().length > 0) {
+                    askNextQuestion();
+                } else {
+                    finalizeConversation();
+                }
+                return;
+            }
+
+            // 2) Intent + Templates
+            const topic=classifyTopic(q);
+            if (topic && topic.sub === "poster") currentService = "poster";
+            else if (topic && topic.area === "websites") currentService = "web";
+
+            if(topic.area!=="unknown" && isSupported(topic)){
+                const tpl=ANSWER_TEMPLATES[currentLang]?.[topic.sub] || ANSWER_TEMPLATES[currentLang]?.[topic.area];
+                if(tpl){
+                    let msg=personalize(composeAnswer(topic,tpl,detailLevel(q)));
+                    addMsg(msg,'bot');
+                    resetProgress();
+                    if(missingSlots().length>0){ askNextQuestion(); }
+                    return;
+                }
+            }
+
+            // 3) Kein Fortschritt → Email anbieten oder noch eine Frage
+            if(filledSlotsCount()===0){
+                markNoProgressAndMaybeOfferEmail();
+            } else if(missingSlots().length>0){
+                resetProgress();
+                askNextQuestion();
+            } else {
+                resetProgress();
+                addMsg(BOT_TEXT[currentLang].fallback,'bot');
+            }
+            return;
+        }
+
+        // ---------- Erste Antwortrunde ----------
+        const topic=classifyTopic(q);
+        if (topic && topic.sub === "poster") currentService = "poster";
+        else if (topic && topic.area === "websites") currentService = "web";
+
+        // Guardrail
+        if(topic.area!=="unknown" && !isSupported(topic)){
+            refuse(topic); return;
+        }
+
+        // a) KB
+        if(fuse && KB.length){
+            const res=fuse.search(q).sort((a,b)=>a.score-b.score);
+            if(res.length && res[0].score<0.45){
+                let msg=personalize(res[0].item.a);
+                addMsg(msg,'bot');
+                resetProgress();
+                if(missingSlots().length>0){ askNextQuestion(); }
+                return;
+            }
+        }
+
+        // b) Template
+        if(topic.area!=="unknown" && isSupported(topic)){
+            const tpl=ANSWER_TEMPLATES[currentLang]?.[topic.sub] || ANSWER_TEMPLATES[currentLang]?.[topic.area];
+            if(tpl){
+                let msg=personalize(composeAnswer(topic,tpl,detailLevel(q)));
+                addMsg(msg,'bot');
+                rememberMapping(q,msg);
+                resetProgress();
+                if(missingSlots().length>0){ askNextQuestion(); }
+                return;
+            }
+        }
+
+        // c) Keine gute Antwort → einmal gezielt nachfragen
+        awaitingDetails=true;
+        if(!askNextQuestion()){ needMore(); }
+    });
+
+    const BETA_NOTE = {
+        en: "⚠️ This assistant is in development — errors may occur.",
+        de: "⚠️ Dieser Assistent befindet sich noch in Entwicklung — Fehler sind möglich."
+    };
+
+
+</script>
+
+<!-- Footer -->
+<div id="footer-placeholder"></div>
+<script>
+    fetch(`${pathPrefix}footer.html`)
+        .then(res => res.text())
+        .then(data => { document.getElementById("footer-placeholder").innerHTML = data; })
+        .catch(err => console.error("Error loading footer:", err));
+</script>
+
+</body>
+</html>

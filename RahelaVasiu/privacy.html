@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy | Rahela Vasiu</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="legal-page-body">
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+<script>
+    const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+    fetch(`${pathPrefix}navbar.html`)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("navbar-placeholder").innerHTML = html;
+
+            const current = location.pathname.split("/").pop() || "index.html";
+            document
+                .querySelectorAll(".top-nav a")
+                .forEach(link => {
+                    if (link.getAttribute("href") === current) {
+                        link.classList.add("active");
+                    }
+                });
+        });
+</script>
+
+<main class="legal-page">
+    <h1>Privacy Policy</h1>
+    <p class="legal-updated">Last updated: 19 November 2025</p>
+
+    <section>
+        <h2>1. Who is responsible for this website?</h2>
+        <p>
+            This website is a personal portfolio created and operated by
+            <strong>Rahela Vasiu</strong>.
+            I keep data collection to an absolute minimum and do not use this site for advertising,
+            user tracking or profiling.
+        </p>
+    </section>
+
+    <section>
+        <h2>2. Data I do not collect</h2>
+        <p>I do <strong>not</strong> use:</p>
+        <ul>
+            <li>Analytics tools (e.g. Google Analytics)</li>
+            <li>Advertising or tracking cookies</li>
+            <li>User accounts, logins or registrations</li>
+            <li>Automated profiling or behavioral tracking</li>
+        </ul>
+        <p>
+            The site is meant to be a simple portfolio, not a data collection machine.
+        </p>
+    </section>
+
+    <section>
+        <h2>3. When you contact me</h2>
+        <p>
+            If you contact me via the contact form or directly by email, you choose to share
+            personal data such as:
+        </p>
+        <ul>
+            <li>Your name</li>
+            <li>Your email address</li>
+            <li>Your message and any information you include in it</li>
+        </ul>
+        <p>
+            I only use this data to read and answer your request.
+            Your data will not be passed on to third parties unless I am legally required to do so.
+        </p>
+    </section>
+
+    <section>
+        <h2>4. Server logs (technical data)</h2>
+        <p>
+            When you visit this website, the hosting provider of this site automatically records
+            so-called “server log files”. These can include:
+        </p>
+        <ul>
+            <li>IP address</li>
+            <li>Date and time of the request</li>
+            <li>Requested page / resource</li>
+            <li>Browser type and version</li>
+            <li>Operating system</li>
+            <li>Referrer URL (the page you came from)</li>
+        </ul>
+        <p>
+            This data is processed based on my legitimate interest in providing a secure,
+            stable website (Art. 6(1)(f) GDPR), for example to detect errors or prevent abuse.
+            Log files are usually deleted automatically after a short period according to the
+            policies of the hosting provider.
+        </p>
+    </section>
+
+    <section>
+        <h2>5. Emails and storage duration</h2>
+        <p>
+            Emails you send to me are stored in my email inbox.
+            I keep them only as long as necessary to handle your request, or longer if there
+            are legal retention requirements or I reasonably need them for documentation.
+        </p>
+        <p>
+            If you want your messages to be deleted, you can contact me and I will remove them
+            unless there are legal reasons not to.
+        </p>
+    </section>
+
+    <section>
+        <h2>6. External links</h2>
+        <p>
+            This website may contain links to external platforms, such as
+            LinkedIn, Behance, GitHub or other portfolios and resources.
+            I have no control over the content or privacy practices of these external sites.
+        </p>
+        <p>
+            Once you click an external link, the privacy policy of that website applies.
+            I cannot accept liability for any external content that I do not operate or control.
+        </p>
+    </section>
+
+    <section>
+        <h2>7. Your rights under the GDPR</h2>
+        <p>
+            If you are in the EU or EEA, you have the following rights regarding your personal data:
+        </p>
+        <ul>
+            <li>Right of access (information about the data stored)</li>
+            <li>Right to rectification (correction of inaccurate data)</li>
+            <li>Right to erasure (“right to be forgotten”)</li>
+            <li>Right to restriction of processing</li>
+            <li>Right to data portability</li>
+            <li>Right to object to processing based on legitimate interests</li>
+            <li>
+                Right to lodge a complaint with a data protection authority, for example in the
+                EU country where you live.
+            </li>
+        </ul>
+        <p>
+            To exercise these rights, you can contact me at:
+            <br />
+            📩 <a href="mailto:vasiurahela@gmail.com">vasiurahela@gmail.com</a>
+        </p>
+    </section>
+
+    <section>
+        <h2>8. Changes to this Privacy Policy</h2>
+        <p>
+            I may update this Privacy Policy from time to time if the website changes or if legal
+            requirements evolve. The current version will always be available on this page.
+        </p>
+    </section>
+
+    <section>
+        <h2>9. Contact</h2>
+        <p>
+            If you have questions about this Privacy Policy or how your data is handled,
+            please contact:
+        </p>
+        <p>
+            <strong>Rahela Vasiu</strong><br />
+            📩 <a href="mailto:vasiurahela@gmail.com">vasiurahela@gmail.com</a>
+        </p>
+    </section>
+</main>
+<!-- Footer -->
+<div id="footer-placeholder"></div>
+<script>
+    fetch(`${pathPrefix}footer.html`)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("footer-placeholder").innerHTML = html;
+        })
+        .catch(err => console.error("Error loading footer:", err));
+</script>
+
+</body>
+</html>

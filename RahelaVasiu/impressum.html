@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Impressum | Rahela Vasiu</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="legal-page-body">
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+<script>
+    const pathPrefix = location.pathname.includes("pages/") ? "../" : "";
+    fetch(`${pathPrefix}navbar.html`)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("navbar-placeholder").innerHTML = html;
+
+            const current = location.pathname.split("/").pop() || "index.html";
+            document
+                .querySelectorAll(".top-nav a")
+                .forEach(link => {
+                    if (link.getAttribute("href") === current) {
+                        link.classList.add("active");
+                    }
+                });
+        });
+</script>
+
+<main class="legal-page">
+    <h1>Impressum</h1>
+
+    <section>
+        <h2>Angaben gemäß § 5 ECG</h2>
+        <p>
+            <strong>Rahela Vasiu</strong><br>
+            <!-- TODO: Deine echte Anschrift eintragen -->
+            Gottlieb-Daimler Weg 6<br>
+            4400 Steyr<br>
+            Österreich
+        </p>
+    </section>
+
+    <section>
+        <h2>Kontakt</h2>
+        <p>
+            E-Mail:
+            <a href="mailto:vasiurahela@gmail.com">vasiurahela@gmail.com</a>
+        </p>
+    </section>
+
+    <section>
+        <h2>Berufsbezeichnung</h2>
+        <p>
+            Studentin &amp; freiberufliche Designerin / Entwicklerin.<br>
+            Tätigkeit im Bereich UX/UI-Design, digitale Produkte und visuelle Gestaltung.
+        </p>
+    </section>
+
+    <section>
+        <h2>Haftung für Inhalte</h2>
+        <p>
+            Die Inhalte dieser Website wurden mit größter Sorgfalt erstellt. Für die Richtigkeit,
+            Vollständigkeit und Aktualität der Inhalte kann ich jedoch keine Gewähr übernehmen.
+            Als Diensteanbieterin bin ich für eigene Inhalte auf diesen Seiten nach den
+            allgemeinen Gesetzen verantwortlich, jedoch nicht verpflichtet, übermittelte oder
+            gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen,
+            die auf eine rechtswidrige Tätigkeit hinweisen.
+        </p>
+    </section>
+
+    <section>
+        <h2>Haftung für Links</h2>
+        <p>
+            Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte ich
+            keinen Einfluss habe. Deshalb kann ich für diese fremden Inhalte auch keine
+            Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige
+            Anbieter oder Betreiber der Seiten verantwortlich.
+        </p>
+    </section>
+
+    <section>
+        <h2>Urheberrecht</h2>
+        <p>
+            Die von mir erstellten Inhalte und Werke auf diesen Seiten unterliegen dem
+            österreichischen Urheberrecht. Beiträge Dritter sind als solche gekennzeichnet.
+            Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung
+            außerhalb der Grenzen des Urheberrechts bedürfen meiner schriftlichen Zustimmung.
+        </p>
+    </section>
+
+    <section>
+        <h2>Datenschutz</h2>
+        <p>
+            Informationen zum Umgang mit personenbezogenen Daten findest du in der
+            <a href="privacy.html">Datenschutzerklärung</a>.
+        </p>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<div id="footer-placeholder"></div>
+<script>
+    fetch(`${pathPrefix}footer.html`)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("footer-placeholder").innerHTML = html;
+        })
+        .catch(err => console.error("Error loading footer:", err));
+</script>
+
+</body>
+</html>
