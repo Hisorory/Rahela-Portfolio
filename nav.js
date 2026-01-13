@@ -10,7 +10,7 @@ const ITEMS = [
 ];
 
 // Controls how much the wheel rotates as you scroll (smaller = slower)
-const ROTATION_MULTIPLIER = 0.18;
+const ROTATION_MULTIPLIER = 0.21;
 
 // Converts degrees → radians
 const toRad = (deg) => (deg * Math.PI) / 180;

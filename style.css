@@ -7,6 +7,7 @@ html, body { height: 100%; }
     --muted: #9bb0b8;
     --accent: #08e7df;
     --wheel-gutter: 34vmin;
+    --wheel-size: clamp(320px, 55vmin, 500px);
 }
 
 /* === Body === */
@@ -72,18 +73,19 @@ body::after {
     grid-template-columns: minmax(380px, 1fr) minmax(380px, 1fr);
     align-items: center;
     justify-content: center;
-    gap: 50px;
+    gap: 120px;
     padding: 0 clamp(40px, 6vw, 100px);
     max-width: 1400px;
     margin: 0 auto;
     position: relative;
     padding-top: 7vh;
-    padding-left: 17vw;
+    padding-left: 8vw;
 }
 
 .hero-text {
     max-width: 560px;
     z-index: 2;
+
 }
 
 .hero-text h1 {
@@ -345,12 +347,27 @@ body::after {
 /* === Radial Nav === */
 .radial-nav {
     position: fixed;
-    left: -50vmin;
     top: 0;
     bottom: 0;
-    width: min(60vmin, 500px);
+
+    width: clamp(320px, 55vmin, 500px);
+    left: calc(var(--wheel-size) * -0.85);
+
     z-index: 12;
     pointer-events: none;
+}
+
+@media (max-width: 900px) {
+    :root {
+        --wheel-size: clamp(280px, 70vmin, 420px);
+    }
+}
+
+@media (max-width: 600px) {
+    .radial-nav {
+        opacity: 0.4;
+        left: calc(var(--wheel-size) * -0.7);
+    }
 }
 
 .radial-nav__wrap {
@@ -1619,6 +1636,9 @@ body.home .home-contact-actions .home-contact-tagline {
 
 .cta-section {
     padding: 72px 10vw 96px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
 }
 
 .cta-inner {
