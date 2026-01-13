@@ -73,19 +73,18 @@ body::after {
     grid-template-columns: minmax(380px, 1fr) minmax(380px, 1fr);
     align-items: center;
     justify-content: center;
-    gap: 120px;
+    gap: 50px;
     padding: 0 clamp(40px, 6vw, 100px);
     max-width: 1400px;
     margin: 0 auto;
     position: relative;
     padding-top: 7vh;
-    padding-left: 8vw;
+    padding-left: 50vw;
 }
 
 .hero-text {
     max-width: 560px;
     z-index: 2;
-
 }
 
 .hero-text h1 {
@@ -93,6 +92,7 @@ body::after {
     font-weight: 800;
     line-height: 0.95;
     margin-bottom: 18px;
+
 }
 
 .hero-text p {
@@ -141,7 +141,7 @@ body::after {
 .blob-wrapper {
     position: sticky;
     bottom: 350px;
-    width: min(50vw,200px);
+    width: min(60vw,250px);
     aspect-ratio: 1/1;
     filter: drop-shadow(0 60px 140px rgba(0,255,210,.18))
     drop-shadow(0 18px 60px rgba(0,220,255,.12));
